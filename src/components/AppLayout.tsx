@@ -114,7 +114,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <ListItemIcon sx={{ minWidth: 40, color: pathname === item.path ? 'primary.contrastText' : 'text.secondary' }}>
                     {item.icon}
                   </ListItemIcon>
-                  <ListItemText primary={item.text} primaryTypographyProps={{ fontWeight: 500 }} />
+                  <ListItemText primary={item.text} slotProps={{ primary: { sx: { fontWeight: 500 } } }} />
                 </ListItemButton>
               </ListItem>
             ))}
