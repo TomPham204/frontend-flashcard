@@ -1,0 +1,153 @@
+Build a modern web app called “Frontend Interview Flashcards” for web developers preparing for interviews.
+
+The app should feel clean, minimal, fast, and focused for daily study sessions.
+
+Core purpose:
+Help users quickly review and memorize frontend interview concepts using categorized flashcards and lightweight spaced repetition.
+
+Target users:
+
+Junior to mid-level frontend developers
+People preparing for React/JavaScript/frontend interviews
+Users who want fast review sessions instead of reading long notes
+
+Main features:
+
+Dashboard / Home
+Show study categories as cards:
+JavaScript
+React
+HTML
+CSS
+System Design
+Web Security
+Performance Optimization
+Each category shows:
+total cards
+mastered cards
+progress bar
+Show “Continue Studying” section
+Show daily streak and cards reviewed today
+Flashcard Study Mode
+One flashcard displayed at a time
+Front side:
+interview question
+Back side:
+concise explanation
+optional code snippet
+optional tags
+Smooth card flip animation
+Buttons:
+Reveal Answer
+Again
+Hard
+Good
+Easy
+Keyboard shortcuts:
+Space = flip
+1/2/3/4 = difficulty rating
+Arrow keys = navigate
+Spaced Repetition Logic
+Simple algorithm:
+Again → review soon
+Hard → short interval
+Good → medium interval
+Easy → long interval
+
+Need:
+
+due cards
+next review date
+study statistics
+Card Management
+Users can:
+Create card
+Edit card
+Delete card
+Add tags
+Add difficulty level
+Assign category
+
+Card structure:
+
+question
+answer
+tags
+category
+difficulty
+createdAt
+updatedAt
+Search and Filtering
+Allow filtering by:
+category
+tag
+difficulty
+mastered/unmastered
+due today
+
+Search should work instantly while typing.
+
+Import / Export
+Export flashcards as JSON
+Import JSON deck
+Sample starter deck included
+UI / UX Requirements
+Design style:
+Modern developer-tool aesthetic
+Similar to Linear, Raycast, or Notion
+Dark mode default
+Responsive layout
+Smooth animations
+Minimal clutter
+
+Need:
+
+beautiful typography
+subtle shadows
+rounded cards
+clean spacing
+elegant transitions
+Technical Requirements
+Frontend:
+React or Next.js
+TypeScript
+Tailwind CSS
+Zustand or Context API for state
+LocalStorage persistence initially
+
+Optional:
+
+Supabase backend later
+Authentication later
+Nice-to-have Features
+If time allows:
+Markdown rendering for answers
+Syntax highlighted code blocks
+Study heatmap
+Random quiz mode
+Bookmark favorite cards
+“Explain like I’m 5” toggle
+AI-generated follow-up questions
+Expected Pages
+Home dashboard
+Study page
+Card editor page
+Statistics page
+Settings page
+Overall Goal
+The app should feel like a polished developer productivity tool rather than a toy flashcard app.
+
+Focus on:
+
+speed
+clean UX
+keyboard-first workflow
+delightful animations
+distraction-free studying
+
+Avoid:
+
+overly colorful UI
+gamification overload
+unnecessary social features
+complex onboarding

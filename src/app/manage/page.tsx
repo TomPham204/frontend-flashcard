@@ -1,0 +1,196 @@
+'use client';
+
+import * as React from 'react';
+import { useFlashcardStore } from '@/store/useFlashcardStore';
+import { Flashcard } from '@/data/starterDeck';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import IconButton from '@mui/material/IconButton';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Chip from '@mui/material/Chip';
+
+export default function ManageCards() {
+  const { cards, addCard, updateCard, deleteCard } = useFlashcardStore();
+  const [mounted, setMounted] = React.useState(false);
+  const [search, setSearch] = React.useState('');
+
+  const [open, setOpen] = React.useState(false);
+  const [editingCard, setEditingCard] = React.useState<Flashcard | null>(null);
+
+  const [formData, setFormData] = React.useState({
+    question: '',
+    answer: '',
+    category: '',
+    codeSnippet: '',
+    tags: '',
+  });
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  const filteredCards = cards.filter(c => 
+    c.question.toLowerCase().includes(search.toLowerCase()) ||
+    c.category.toLowerCase().includes(search.toLowerCase()) ||
+    c.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const handleOpenNew = () => {
+    setEditingCard(null);
+    setFormData({ question: '', answer: '', category: '', codeSnippet: '', tags: '' });
+    setOpen(true);
+  };
+
+  const handleOpenEdit = (card: Flashcard) => {
+    setEditingCard(card);
+    setFormData({
+      question: card.question,
+      answer: card.answer,
+      category: card.category,
+      codeSnippet: card.codeSnippet || '',
+      tags: card.tags.join(', '),
+    });
+    setOpen(true);
+  };
+
+  const handleSave = () => {
+    const dataToSave = {
+      question: formData.question,
+      answer: formData.answer,
+      category: formData.category,
+      codeSnippet: formData.codeSnippet,
+      tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
+    };
+
+    if (editingCard) {
+      updateCard(editingCard.id, dataToSave);
+    } else {
+      addCard(dataToSave);
+    }
+    setOpen(false);
+  };
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h4">Manage Cards</Typography>
+        <Button variant="contained" onClick={handleOpenNew}>Create New Card</Button>
+      </Box>
+
+      <TextField
+        fullWidth
+        variant="outlined"
+        placeholder="Search questions, categories, or tags..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        sx={{ mb: 4 }}
+      />
+
+      <TableContainer component={Paper}>
+        <Table sx={{ minWidth: 650 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell>Question</TableCell>
+              <TableCell>Category</TableCell>
+              <TableCell>Tags</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell align="right">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredCards.map((card) => (
+              <TableRow key={card.id}>
+                <TableCell sx={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {card.question}
+                </TableCell>
+                <TableCell>{card.category}</TableCell>
+                <TableCell>
+                  {card.tags.map(t => <Chip key={t} label={t} size="small" sx={{ mr: 0.5 }} />)}
+                </TableCell>
+                <TableCell>{card.status}</TableCell>
+                <TableCell align="right">
+                  <IconButton onClick={() => handleOpenEdit(card)} size="small" color="primary">
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton onClick={() => deleteCard(card.id)} size="small" color="error">
+                    <DeleteIcon />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+            {filteredCards.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} align="center">No cards found.</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>{editingCard ? 'Edit Card' : 'Create New Card'}</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <TextField
+            label="Category"
+            fullWidth
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+          />
+          <TextField
+            label="Question"
+            fullWidth
+            multiline
+            rows={2}
+            value={formData.question}
+            onChange={(e) => setFormData({ ...formData, question: e.target.value })}
+          />
+          <TextField
+            label="Answer"
+            fullWidth
+            multiline
+            rows={3}
+            value={formData.answer}
+            onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
+          />
+          <TextField
+            label="Code Snippet (optional)"
+            fullWidth
+            multiline
+            rows={3}
+            value={formData.codeSnippet}
+            onChange={(e) => setFormData({ ...formData, codeSnippet: e.target.value })}
+            sx={{ fontFamily: 'monospace' }}
+          />
+          <TextField
+            label="Tags (comma separated)"
+            fullWidth
+            value={formData.tags}
+            onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleSave} disabled={!formData.question || !formData.answer || !formData.category}>
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+}
