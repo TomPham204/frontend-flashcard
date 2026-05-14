@@ -15,21 +15,22 @@ export default function StudyPage() {
   const params = useParams();
   const router = useRouter();
   const category = decodeURIComponent(params.category as string);
-  const { cards, reviewCard } = useFlashcardStore();
-  
+  const { cards, reviewCard, migrateIfNeeded, loading } = useFlashcardStore();
+
   const [mounted, setMounted] = React.useState(false);
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const [isFlipped, setIsFlipped] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
-  }, []);
+    migrateIfNeeded();
+  }, [migrateIfNeeded]);
 
   const now = new Date();
   const dueCards = React.useMemo(() => {
     if (!mounted) return [];
     return cards.filter(
-      c => c.category === category && (!c.nextReviewDate || new Date(c.nextReviewDate) <= now)
+      c => c.category === category && (!c.next_review_at || new Date(c.next_review_at) <= now)
     );
   }, [cards, category, mounted]);
 
@@ -71,7 +72,7 @@ export default function StudyPage() {
   const handleRating = (rating: Difficulty) => {
     reviewCard(currentCard.id, rating);
     setIsFlipped(false);
-    // Since the card's nextReviewDate is updated, it might drop out of dueCards on next render.
+    // Since the card's next_review_at is updated, it might drop out of dueCards on next render.
     // If it doesn't, we can advance currentIndex manually, but our dueCards uses useMemo which re-evaluates.
     // However, if we don't advance the index and dueCards updates, the next card will automatically slide into currentIndex 0.
     // We should keep currentIndex at 0 and let the list shrink.
@@ -149,10 +150,10 @@ export default function StudyPage() {
               }}
             >
               <Typography variant="body1" sx={{ mb: 2, fontSize: '1.25rem' }}>{currentCard.answer}</Typography>
-              {currentCard.codeSnippet && (
+              {currentCard.code_snippet && (
                 <Box sx={{ width: '100%', bgcolor: 'rgba(0,0,0,0.2)', p: 2, borderRadius: 1, textAlign: 'left', overflowX: 'auto', mt: 2 }}>
                   <pre style={{ margin: 0 }}>
-                    <code>{currentCard.codeSnippet}</code>
+                    <code>{currentCard.code_snippet}</code>
                   </pre>
                 </Box>
               )}

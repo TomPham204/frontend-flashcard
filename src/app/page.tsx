@@ -12,25 +12,30 @@ import { useFlashcardStore } from '@/store/useFlashcardStore';
 import Link from 'next/link';
 
 export default function Dashboard() {
-  const { cards, loadStarterDeck } = useFlashcardStore();
+  const { cards, loadStarterDeck, migrateIfNeeded, loading } = useFlashcardStore();
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
-  }, []);
+    migrateIfNeeded();
+  }, [migrateIfNeeded]);
 
-  if (!mounted) {
-    return null; // Avoid hydration mismatch for localStorage data
+  if (!mounted || loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+        <LinearProgress sx={{ width: '50%' }} />
+      </Box>
+    );
   }
 
   // Calculate statistics
   const categories = Array.from(new Set(cards.map(c => c.category)));
   const totalCards = cards.length;
-  const masteredCards = cards.filter(c => c.status === 'Easy' || c.status === 'Good').length;
-  
+  const masteredCards = cards.filter(c => c.difficulty === 'Easy' || c.difficulty === 'Good').length;
+
   // Calculate today's due cards (simplified)
   const now = new Date();
-  const dueCards = cards.filter(c => !c.nextReviewDate || new Date(c.nextReviewDate) <= now).length;
+  const dueCards = cards.filter(c => !c.next_review_at || new Date(c.next_review_at) <= now).length;
 
   const handleLoadStarter = () => {
     loadStarterDeck();
@@ -100,9 +105,9 @@ export default function Dashboard() {
         ) : (
           categories.map(category => {
             const categoryCards = cards.filter(c => c.category === category);
-            const categoryMastered = categoryCards.filter(c => c.status === 'Easy' || c.status === 'Good').length;
+            const categoryMastered = categoryCards.filter(c => c.difficulty === 'Easy' || c.difficulty === 'Good').length;
             const progress = (categoryMastered / categoryCards.length) * 100;
-            const categoryDue = categoryCards.filter(c => !c.nextReviewDate || new Date(c.nextReviewDate) <= now).length;
+            const categoryDue = categoryCards.filter(c => !c.next_review_at || new Date(c.next_review_at) <= now).length;
 
             return (
               <Box key={category}>

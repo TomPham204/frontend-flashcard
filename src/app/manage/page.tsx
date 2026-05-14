@@ -35,17 +35,18 @@ export default function ManageCards() {
     question: '',
     answer: '',
     category: '',
-    codeSnippet: '',
+    code_snippet: '',
     tags: '',
   });
 
   React.useEffect(() => {
     setMounted(true);
+    useFlashcardStore.getState().migrateIfNeeded();
   }, []);
 
   if (!mounted) return null;
 
-  const filteredCards = cards.filter(c => 
+  const filteredCards = cards.filter(c =>
     c.question.toLowerCase().includes(search.toLowerCase()) ||
     c.category.toLowerCase().includes(search.toLowerCase()) ||
     c.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))
@@ -53,7 +54,7 @@ export default function ManageCards() {
 
   const handleOpenNew = () => {
     setEditingCard(null);
-    setFormData({ question: '', answer: '', category: '', codeSnippet: '', tags: '' });
+    setFormData({ question: '', answer: '', category: '', code_snippet: '', tags: '' });
     setOpen(true);
   };
 
@@ -63,7 +64,7 @@ export default function ManageCards() {
       question: card.question,
       answer: card.answer,
       category: card.category,
-      codeSnippet: card.codeSnippet || '',
+      code_snippet: card.code_snippet || '',
       tags: card.tags.join(', '),
     });
     setOpen(true);
@@ -74,7 +75,7 @@ export default function ManageCards() {
       question: formData.question,
       answer: formData.answer,
       category: formData.category,
-      codeSnippet: formData.codeSnippet,
+      code_snippet: formData.code_snippet,
       tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
     };
 
@@ -109,7 +110,7 @@ export default function ManageCards() {
               <TableCell>Question</TableCell>
               <TableCell>Category</TableCell>
               <TableCell>Tags</TableCell>
-              <TableCell>Status</TableCell>
+              <TableCell>Difficulty</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -123,7 +124,7 @@ export default function ManageCards() {
                 <TableCell>
                   {card.tags.map(t => <Chip key={t} label={t} size="small" sx={{ mr: 0.5 }} />)}
                 </TableCell>
-                <TableCell>{card.status}</TableCell>
+                <TableCell>{card.difficulty}</TableCell>
                 <TableCell align="right">
                   <IconButton onClick={() => handleOpenEdit(card)} size="small" color="primary">
                     <EditIcon />
@@ -173,8 +174,8 @@ export default function ManageCards() {
             fullWidth
             multiline
             rows={3}
-            value={formData.codeSnippet}
-            onChange={(e) => setFormData({ ...formData, codeSnippet: e.target.value })}
+            value={formData.code_snippet}
+            onChange={(e) => setFormData({ ...formData, code_snippet: e.target.value })}
             sx={{ fontFamily: 'monospace' }}
           />
           <TextField
