@@ -17,7 +17,7 @@ export interface Flashcard {
 export const starterDeck: Flashcard[] = [
   // JavaScript
   {
-    id: 'js-1',
+    id: 'f7b1b3b1-7b1b-4b1b-8b1b-1b1b1b1b1b1b',
     category: 'JavaScript',
     question: 'What is a closure?',
     answer: 'A closure is the combination of a function bundled together (enclosed) with references to its surrounding state (the lexical environment). In other words, a closure gives you access to an outer function\'s scope from an inner function.',
@@ -29,7 +29,7 @@ export const starterDeck: Flashcard[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: 'js-2',
+    id: 'e2b2b2b2-2b2b-4b2b-8b2b-2b2b2b2b2b2b',
     category: 'JavaScript',
     question: 'Explain the difference between let, const, and var.',
     answer: 'var is function-scoped and hoisted. let and const are block-scoped. let allows reassignment, while const does not (though properties of objects assigned to const can be mutated).',
@@ -41,7 +41,7 @@ export const starterDeck: Flashcard[] = [
   },
   // React
   {
-    id: 'react-1',
+    id: 'd3b3b3b3-3b3b-4b3b-8b3b-3b3b3b3b3b3b',
     category: 'React',
     question: 'What is the Virtual DOM?',
     answer: 'The Virtual DOM is a programming concept where an ideal, or "virtual", representation of a UI is kept in memory and synced with the "real" DOM by a library such as ReactDOM. This process is called reconciliation.',
@@ -52,7 +52,7 @@ export const starterDeck: Flashcard[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: 'react-2',
+    id: 'c4b4b4b4-4b4b-4b4b-8b4b-4b4b4b4b4b4b',
     category: 'React',
     question: 'What are React Hooks?',
     answer: 'Hooks are functions that let you "hook into" React state and lifecycle features from function components. They do not work inside classes.',
@@ -65,7 +65,7 @@ export const starterDeck: Flashcard[] = [
   },
   // HTML
   {
-    id: 'html-1',
+    id: 'b5b5b5b5-5b5b-4b5b-8b5b-5b5b5b5b5b5b',
     category: 'HTML',
     question: 'What are semantic HTML elements?',
     answer: 'Semantic HTML elements clearly describe their meaning in a human- and machine-readable way. Examples include <header>, <footer>, <article>, and <section>, as opposed to non-semantic elements like <div> and <span>.',
@@ -77,7 +77,7 @@ export const starterDeck: Flashcard[] = [
   },
   // CSS
   {
-    id: 'css-1',
+    id: 'a6b6b6b6-6b6b-4b6b-8b6b-6b6b6b6b6b6b',
     category: 'CSS',
     question: 'Explain CSS Specificity.',
     answer: 'Specificity is the algorithm used by browsers to determine the CSS declaration that is the most relevant to an element, which in turn, determines the property value to apply. It is calculated based on inline styles, IDs, classes, attributes, pseudo-classes, and elements.',
@@ -89,7 +89,7 @@ export const starterDeck: Flashcard[] = [
   },
   // Performance
   {
-    id: 'perf-1',
+    id: '97b7b7b7-7b7b-4b7b-8b7b-7b7b7b7b7b7b',
     category: 'Performance Optimization',
     question: 'What is lazy loading?',
     answer: 'Lazy loading is a strategy to identify resources as non-blocking (non-critical) and load these only when needed. It is a way to optimize the critical rendering path.',

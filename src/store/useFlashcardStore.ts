@@ -42,6 +42,11 @@ const calculateNextReviewAt = (rating: Difficulty): string => {
   return now.toISOString();
 };
 
+const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
 export const useFlashcardStore = create<FlashcardState>()(
   persist(
     (set, get) => ({
@@ -156,7 +161,11 @@ export const useFlashcardStore = create<FlashcardState>()(
         const newCards = starterDeck.filter((c) => !existingIds.has(c.id));
 
         if (session) {
-          const cardsToInsert = newCards.map(c => ({ ...c, user_id: session.user.id }));
+          const cardsToInsert = newCards.map(c => ({
+            ...c,
+            id: isValidUUID(c.id) ? c.id : crypto.randomUUID(),
+            user_id: session.user.id
+          }));
           const { error } = await supabase.from('flashcards').insert(cardsToInsert);
           if (error) {
             set({ error: error.message });
@@ -180,6 +189,7 @@ export const useFlashcardStore = create<FlashcardState>()(
         if (existingCloudCards?.length === 0 && get().cards.length > 0) {
           const cardsToMigrate = get().cards.map(c => ({
             ...c,
+            id: isValidUUID(c.id) ? c.id : crypto.randomUUID(),
             user_id: session.user.id
           }));
 
