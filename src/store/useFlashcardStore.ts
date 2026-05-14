@@ -16,6 +16,7 @@ interface FlashcardState {
   deleteCard: (id: string) => Promise<void>;
   reviewCard: (id: string, rating: Difficulty) => Promise<void>;
   loadStarterDeck: () => Promise<void>;
+  importDeck: (cards: Flashcard[]) => Promise<void>;
   resetDeck: () => void;
   migrateIfNeeded: () => Promise<void>;
 }
@@ -193,6 +194,21 @@ export const useFlashcardStore = create<FlashcardState>()(
           set({ isMigrated: true });
           await get().fetchCards();
         }
+      },
+
+      importDeck: async (importedCards: Flashcard[]) => {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {
+          const cardsWithUserId = importedCards.map(c => ({ ...c, user_id: session.user.id }));
+          const { error } = await supabase.from('flashcards').insert(cardsWithUserId);
+          if (error) {
+            set({ error: error.message });
+            return;
+          }
+        }
+
+        set((state) => ({ cards: [...state.cards, ...importedCards] }));
       },
 
       resetDeck: () => set({ cards: [] }),
