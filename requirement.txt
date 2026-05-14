@@ -7,7 +7,7 @@ Help users quickly review and memorize frontend interview concepts using categor
 
 Target users:
 
-Junior to mid-level frontend developers
+Junior to senior frontend developers
 People preparing for React/JavaScript/frontend interviews
 Users who want fast review sessions instead of reading long notes
 
