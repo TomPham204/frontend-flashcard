@@ -19,6 +19,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import SettingsIcon from '@mui/icons-material/Settings';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import LogoutIcon from '@mui/icons-material/Logout';
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
@@ -68,6 +69,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+    { text: 'Decks', icon: <LibraryBooksIcon />, path: '/decks' },
     { text: 'Manage Cards', icon: <FormatListBulletedIcon />, path: '/manage' },
     { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
   ];

@@ -1,7 +1,25 @@
 export type Difficulty = 'Again' | 'Hard' | 'Good' | 'Easy' | 'New';
 
+export interface Deck {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  tags: string[];
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PublicDeckPreview extends Deck {
+  flashcards: { count: number }[]; // Supabase count format
+  preview_cards: Pick<Flashcard, 'id' | 'question' | 'answer'>[];
+}
+
 export interface Flashcard {
   id: string;
+  deck_id?: string;
   user_id?: string;
   question: string;
   answer: string;
