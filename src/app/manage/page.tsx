@@ -22,6 +22,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Chip from '@mui/material/Chip';
+import Checkbox from '@mui/material/Checkbox';
 
 export default function ManageCards() {
   const { cards, addCard, updateCard, deleteCard } = useFlashcardStore();
@@ -38,6 +39,8 @@ export default function ManageCards() {
     code_snippet: '',
     tags: '',
   });
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
@@ -87,11 +90,63 @@ export default function ManageCards() {
     setOpen(false);
   };
 
+  const handleToggleOne = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleToggleAll = () => {
+    if (selectedIds.size === filteredCards.length && filteredCards.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredCards.map(c => c.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.size} cards?`)) {
+      setIsDeleting(true);
+      const idsToDelete = Array.from(selectedIds);
+      for (const id of idsToDelete) {
+        await deleteCard(id);
+      }
+      setSelectedIds(new Set());
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteIndividual = (id: string) => {
+    deleteCard(id);
+    if (selectedIds.has(id)) {
+      const newSelected = new Set(selectedIds);
+      newSelected.delete(id);
+      setSelectedIds(newSelected);
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4">Manage Cards</Typography>
-        <Button variant="contained" onClick={handleOpenNew}>Create New Card</Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {selectedIds.size > 0 && (
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={handleBulkDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : `Delete Selected (${selectedIds.size})`}
+            </Button>
+          )}
+          <Button variant="contained" onClick={handleOpenNew}>Create New Card</Button>
+        </Box>
       </Box>
 
       <TextField
@@ -107,6 +162,13 @@ export default function ManageCards() {
         <Table sx={{ minWidth: 650 }}>
           <TableHead>
             <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  indeterminate={selectedIds.size > 0 && selectedIds.size < filteredCards.length}
+                  checked={filteredCards.length > 0 && selectedIds.size === filteredCards.length}
+                  onChange={handleToggleAll}
+                />
+              </TableCell>
               <TableCell>Question</TableCell>
               <TableCell>Category</TableCell>
               <TableCell>Tags</TableCell>
@@ -116,7 +178,13 @@ export default function ManageCards() {
           </TableHead>
           <TableBody>
             {filteredCards.map((card) => (
-              <TableRow key={card.id}>
+              <TableRow key={card.id} selected={selectedIds.has(card.id)}>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    checked={selectedIds.has(card.id)}
+                    onChange={() => handleToggleOne(card.id)}
+                  />
+                </TableCell>
                 <TableCell sx={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {card.question}
                 </TableCell>
@@ -129,7 +197,7 @@ export default function ManageCards() {
                   <IconButton onClick={() => handleOpenEdit(card)} size="small" color="primary">
                     <EditIcon />
                   </IconButton>
-                  <IconButton onClick={() => deleteCard(card.id)} size="small" color="error">
+                  <IconButton onClick={() => handleDeleteIndividual(card.id)} size="small" color="error">
                     <DeleteIcon />
                   </IconButton>
                 </TableCell>

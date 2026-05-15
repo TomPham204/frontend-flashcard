@@ -100,7 +100,7 @@ export const useFlashcardStore = create<FlashcardState>()(
         const { data: { session } } = await supabase.auth.getSession();
         const updatedFields = { ...cardData, updated_at: new Date().toISOString() };
 
-        if (session) {
+        if (session && isValidUUID(id)) {
           const { error } = await supabase
             .from('flashcards')
             .update(updatedFields)
@@ -118,7 +118,7 @@ export const useFlashcardStore = create<FlashcardState>()(
 
       deleteCard: async (id) => {
         const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
+        if (session && isValidUUID(id)) {
           const { error } = await supabase.from('flashcards').delete().eq('id', id);
           if (error) {
             set({ error: error.message });
@@ -139,7 +139,7 @@ export const useFlashcardStore = create<FlashcardState>()(
           updated_at: new Date().toISOString(),
         };
 
-        if (session) {
+        if (session && isValidUUID(id)) {
           const { error } = await supabase
             .from('flashcards')
             .update(updatedFields)
@@ -171,14 +171,21 @@ export const useFlashcardStore = create<FlashcardState>()(
             set({ error: error.message });
             return;
           }
+          // Use the cards with assigned UUIDs and user_id
+          set((state) => ({ cards: [...state.cards, ...cardsToInsert as Flashcard[]] }));
+        } else {
+          set((state) => ({ cards: [...state.cards, ...newCards] }));
         }
-
-        set((state) => ({ cards: [...state.cards, ...newCards] }));
       },
 
       migrateIfNeeded: async () => {
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session || get().isMigrated) return;
+        if (!session) return;
+
+        if (get().isMigrated) {
+          await get().fetchCards();
+          return;
+        }
 
         const { data: existingCloudCards } = await supabase
           .from('flashcards')
@@ -195,7 +202,8 @@ export const useFlashcardStore = create<FlashcardState>()(
 
           const { error } = await supabase.from('flashcards').insert(cardsToMigrate);
           if (!error) {
-            set({ isMigrated: true });
+            set({ cards: cardsToMigrate as Flashcard[], isMigrated: true });
+            await get().fetchCards();
           } else {
             console.error('Migration failed:', error.message);
           }
@@ -210,15 +218,20 @@ export const useFlashcardStore = create<FlashcardState>()(
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session) {
-          const cardsWithUserId = importedCards.map(c => ({ ...c, user_id: session.user.id }));
+          const cardsWithUserId = importedCards.map(c => ({
+            ...c,
+            id: isValidUUID(c.id) ? c.id : crypto.randomUUID(),
+            user_id: session.user.id
+          }));
           const { error } = await supabase.from('flashcards').insert(cardsWithUserId);
           if (error) {
             set({ error: error.message });
             return;
           }
+          set((state) => ({ cards: [...state.cards, ...cardsWithUserId as Flashcard[]] }));
+        } else {
+          set((state) => ({ cards: [...state.cards, ...importedCards] }));
         }
-
-        set((state) => ({ cards: [...state.cards, ...importedCards] }));
       },
 
       resetDeck: () => set({ cards: [] }),
