@@ -30,7 +30,7 @@ export default function StudyPage() {
   const dueCards = React.useMemo(() => {
     if (!mounted) return [];
     return cards.filter(
-      c => c.category === category && (!c.next_review_at || new Date(c.next_review_at) <= now)
+      c => c.category === category && (!c.due_date || new Date(c.due_date) <= now)
     );
   }, [cards, category, mounted]);
 
@@ -72,7 +72,7 @@ export default function StudyPage() {
   const handleRating = (rating: Difficulty) => {
     reviewCard(currentCard.id, rating);
     setIsFlipped(false);
-    // Since the card's next_review_at is updated, it might drop out of dueCards on next render.
+    // Since the card's due_date is updated, it might drop out of dueCards on next render.
     // If it doesn't, we can advance currentIndex manually, but our dueCards uses useMemo which re-evaluates.
     // However, if we don't advance the index and dueCards updates, the next card will automatically slide into currentIndex 0.
     // We should keep currentIndex at 0 and let the list shrink.

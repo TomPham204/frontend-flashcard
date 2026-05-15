@@ -12,12 +12,18 @@ import Alert from '@mui/material/Alert';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 
 export default function SettingsPage() {
   const { cards, importDeck, resetDeck } = useFlashcardStore();
   const [mounted, setMounted] = React.useState(false);
   const [message, setMessage] = React.useState<{ type: 'success' | 'error', text: string } | null>(null);
-  
+  const [resetDialogOpen, setResetDialogOpen] = React.useState(false);
+
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -31,14 +37,14 @@ export default function SettingsPage() {
       const dataStr = JSON.stringify(cards, null, 2);
       const blob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      
+
       const link = document.createElement('a');
       link.href = url;
       link.download = `flashcards_export_${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       URL.revokeObjectURL(url);
       setMessage({ type: 'success', text: 'Deck exported successfully.' });
     } catch (err) {
@@ -68,10 +74,13 @@ export default function SettingsPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleReset = () => {
-    if (confirm('Are you sure you want to delete all cards and progress? This cannot be undone.')) {
-      resetDeck();
+  const handleReset = async () => {
+    setResetDialogOpen(false);
+    try {
+      await resetDeck();
       setMessage({ type: 'success', text: 'Deck has been reset.' });
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to reset deck. Please try again.' });
     }
   };
 
@@ -90,7 +99,7 @@ export default function SettingsPage() {
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>Data Management</Typography>
             <Divider sx={{ mb: 3 }} />
-            
+
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }} gutterBottom>Export Data</Typography>
@@ -128,7 +137,7 @@ export default function SettingsPage() {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   Permanently delete all flashcards and study progress.
                 </Typography>
-                <Button variant="contained" color="error" startIcon={<DeleteForeverIcon />} onClick={handleReset}>
+                <Button variant="contained" color="error" startIcon={<DeleteForeverIcon />} onClick={() => setResetDialogOpen(true)}>
                   Reset Deck
                 </Button>
               </Box>
@@ -136,6 +145,28 @@ export default function SettingsPage() {
           </Paper>
         </Box>
       </Box>
+
+      <Dialog
+        open={resetDialogOpen}
+        onClose={() => setResetDialogOpen(false)}
+        aria-labelledby="reset-dialog-title"
+        aria-describedby="reset-dialog-description"
+      >
+        <DialogTitle id="reset-dialog-title">
+          {"Reset Deck and Progress?"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="reset-dialog-description">
+            Are you sure you want to delete all cards and progress? This cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleReset} color="error" autoFocus id="confirm-reset-button">
+            Reset Everything
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

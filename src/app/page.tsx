@@ -35,7 +35,7 @@ export default function Dashboard() {
 
   // Calculate today's due cards (simplified)
   const now = new Date();
-  const dueCards = cards.filter(c => !c.next_review_at || new Date(c.next_review_at) <= now).length;
+  const dueCards = cards.filter(c => !c.due_date || new Date(c.due_date) <= now).length;
 
   const handleLoadStarter = () => {
     loadStarterDeck();
@@ -107,7 +107,7 @@ export default function Dashboard() {
             const categoryCards = cards.filter(c => c.category === category);
             const categoryMastered = categoryCards.filter(c => c.difficulty === 'Easy' || c.difficulty === 'Good').length;
             const progress = (categoryMastered / categoryCards.length) * 100;
-            const categoryDue = categoryCards.filter(c => !c.next_review_at || new Date(c.next_review_at) <= now).length;
+            const categoryDue = categoryCards.filter(c => !c.due_date || new Date(c.due_date) <= now).length;
 
             return (
               <Box key={category}>

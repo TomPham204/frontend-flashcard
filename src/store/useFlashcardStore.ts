@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Flashcard, Difficulty, starterDeck } from '@/data/starterDeck';
 import { supabase } from '@/utils/supabase/client';
+import { calculateReviewState } from '@/utils/srs';
 
 interface FlashcardState {
   cards: Flashcard[];
@@ -11,36 +12,17 @@ interface FlashcardState {
 
   // Actions
   fetchCards: () => Promise<void>;
-  addCard: (card: Omit<Flashcard, 'id' | 'created_at' | 'updated_at' | 'difficulty' | 'next_review_at'>) => Promise<void>;
+  addCard: (card: Omit<Flashcard, 'id' | 'created_at' | 'updated_at' | 'difficulty' | 'due_date' | 'interval_days' | 'ease_factor' | 'review_count' | 'lapse_count'>) => Promise<void>;
   updateCard: (id: string, card: Partial<Flashcard>) => Promise<void>;
   deleteCard: (id: string) => Promise<void>;
   reviewCard: (id: string, rating: Difficulty) => Promise<void>;
   loadStarterDeck: () => Promise<void>;
   importDeck: (cards: Flashcard[]) => Promise<void>;
-  resetDeck: () => void;
+  resetDeck: () => Promise<void>;
   migrateIfNeeded: () => Promise<void>;
 }
 
-const calculateNextReviewAt = (rating: Difficulty): string => {
-  const now = new Date();
-  switch (rating) {
-    case 'Again':
-      now.setMinutes(now.getMinutes() + 10);
-      break;
-    case 'Hard':
-      now.setHours(now.getHours() + 12);
-      break;
-    case 'Good':
-      now.setDate(now.getDate() + 1);
-      break;
-    case 'Easy':
-      now.setDate(now.getDate() + 3);
-      break;
-    default:
-      break;
-  }
-  return now.toISOString();
-};
+
 
 const isValidUUID = (uuid: string): boolean => {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -68,7 +50,16 @@ export const useFlashcardStore = create<FlashcardState>()(
         if (error) {
           set({ error: error.message, loading: false });
         } else {
-          set({ cards: data as Flashcard[], loading: false });
+          const cleanedCards = (data as any[]).map(card => ({
+            ...card,
+            difficulty: card.difficulty || 'New',
+            due_date: card.due_date || null,
+            interval_days: card.interval_days ?? 0,
+            ease_factor: card.ease_factor ?? 2.5,
+            review_count: card.review_count ?? 0,
+            lapse_count: card.lapse_count ?? 0,
+          }));
+          set({ cards: cleanedCards as Flashcard[], loading: false });
         }
       },
 
@@ -78,7 +69,11 @@ export const useFlashcardStore = create<FlashcardState>()(
           ...cardData,
           id: crypto.randomUUID(),
           difficulty: 'New',
-          next_review_at: null,
+          due_date: null,
+          interval_days: 0,
+          ease_factor: 2.5,
+          review_count: 0,
+          lapse_count: 0,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
@@ -132,10 +127,15 @@ export const useFlashcardStore = create<FlashcardState>()(
       },
 
       reviewCard: async (id, rating) => {
+        const state = get();
+        const card = state.cards.find(c => c.id === id);
+        if (!card) return;
+
         const { data: { session } } = await supabase.auth.getSession();
+
+        const srsUpdates = calculateReviewState(card, rating);
         const updatedFields = {
-          difficulty: rating,
-          next_review_at: calculateNextReviewAt(rating),
+          ...srsUpdates,
           updated_at: new Date().toISOString(),
         };
 
@@ -163,7 +163,7 @@ export const useFlashcardStore = create<FlashcardState>()(
         if (session) {
           const cardsToInsert = newCards.map(c => ({
             ...c,
-            id: isValidUUID(c.id) ? c.id : crypto.randomUUID(),
+            id: crypto.randomUUID(),
             user_id: session.user.id
           }));
           const { error } = await supabase.from('flashcards').insert(cardsToInsert);
@@ -234,7 +234,23 @@ export const useFlashcardStore = create<FlashcardState>()(
         }
       },
 
-      resetDeck: () => set({ cards: [] }),
+      resetDeck: async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {
+          const { error } = await supabase
+            .from('flashcards')
+            .delete()
+            .eq('user_id', session.user.id);
+
+          if (error) {
+            set({ error: error.message });
+            return;
+          }
+        }
+
+        set({ cards: [] });
+      },
     }),
     {
       name: 'flashcard-storage',
