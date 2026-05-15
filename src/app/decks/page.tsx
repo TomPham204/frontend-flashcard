@@ -159,7 +159,7 @@ export default function DecksPage() {
                         <TextField
                             fullWidth
                             value={shareLink || ''}
-                            InputProps={{ readOnly: true }}
+                            slotProps={{ input: { readOnly: true } }}
                             size="small"
                         />
                         <Button variant="contained" aria-label="copy" onClick={() => shareLink && copyToClipboard(shareLink)}>
