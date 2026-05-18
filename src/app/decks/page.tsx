@@ -15,15 +15,37 @@ import DialogActions from '@mui/material/DialogActions';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import ShareIcon from '@mui/icons-material/Share';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import Chip from '@mui/material/Chip';
 import Link from 'next/link';
+import {
+    Plus,
+    Settings2,
+    Trash2,
+    Share2,
+    Copy,
+    ExternalLink,
+    Lock,
+    Globe,
+    Tag,
+    X
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { useDeckStore } from '@/store/useDeckStore';
 import { Deck } from '@/data/starterDeck';
+
+const container = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: { staggerChildren: 0.05 }
+    }
+};
+
+const item = {
+    hidden: { opacity: 0, y: 15 },
+    show: { opacity: 1, y: 0 }
+};
 
 export default function DecksPage() {
     const { decks, fetchDecks, createDeck, updateDeck, deleteDeck, toggleVisibility } = useDeckStore();
@@ -82,132 +104,221 @@ export default function DecksPage() {
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
-        alert('Link copied to clipboard!');
         setShareLink(null);
     };
 
     return (
-        <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                <Typography variant="h4">My Decks</Typography>
-                <Button variant="contained" onClick={handleOpenNew}>Create New Deck</Button>
+        <Box component={motion.div} variants={container} initial="hidden" animate="show">
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 6 }}>
+                <Box>
+                    <Typography variant="h3" sx={{ fontWeight: 800, letterSpacing: '-0.03em' }}>My Decks</Typography>
+                    <Typography variant="body2" sx={{ opacity: 0.6, fontWeight: 600 }}>Create and organize your collections</Typography>
+                </Box>
+                <Button
+                    variant="contained"
+                    onClick={handleOpenNew}
+                    startIcon={<Plus size={20} />}
+                    sx={{ borderRadius: '16px', py: 1.5, px: 3 }}
+                >
+                    Create New
+                </Button>
             </Box>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}>
                 {decks.length === 0 ? (
-                    <Typography color="text.secondary">You have no decks yet. Create one to get started!</Typography>
+                    <Box sx={{ gridColumn: '1 / -1', p: 8, textAlign: 'center', borderRadius: '32px', border: '2px dashed var(--glass-border)' }}>
+                        <Typography color="text.secondary" sx={{ fontWeight: 600 }}>You have no decks yet. Create one to get started!</Typography>
+                    </Box>
                 ) : (
                     decks.map(deck => (
-                        <Card key={deck.id} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            <CardContent sx={{ flexGrow: 1 }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                    <Typography variant="h6" noWrap>{deck.title}</Typography>
-                                    <FormControlLabel
-                                        control={
+                        <Box key={deck.id} component={motion.div} variants={item}>
+                            <Card sx={{
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                '&:hover': {
+                                    transform: 'translateY(-4px)',
+                                    borderColor: 'primary.main',
+                                }
+                            }}>
+                                <CardContent sx={{ flexGrow: 1, p: 3 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                                        <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: '-0.01em' }} noWrap>{deck.title}</Typography>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, opacity: 0.6 }}>
+                                            {deck.is_public ? <Globe size={14} /> : <Lock size={14} />}
                                             <Switch
                                                 checked={deck.is_public}
                                                 onChange={(e) => toggleVisibility(deck.id, e.target.checked)}
                                                 size="small"
+                                                sx={{ ml: -1 }}
                                             />
-                                        }
-                                        label={<Typography variant="caption" color="text.secondary">{deck.is_public ? 'Public' : 'Private'}</Typography>}
-                                        labelPlacement="start"
-                                        sx={{ m: 0 }}
-                                    />
-                                </Box>
-                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                    {deck.description || 'No description'}
-                                </Typography>
-
-                                {deck.tags.length > 0 && (
-                                    <Box sx={{ mb: 2 }}>
-                                        {deck.tags.map(t => <Chip key={t} label={t} size="small" sx={{ mr: 0.5, mb: 0.5 }} />)}
+                                        </Box>
                                     </Box>
-                                )}
-                            </CardContent>
-                            <CardActions sx={{ justifyContent: 'space-between', borderTop: '1px solid', borderColor: 'divider' }}>
-                                <Box>
-                                    <IconButton size="small" onClick={() => handleOpenEdit(deck)} title="Edit Details">
-                                        <EditIcon fontSize="small" />
-                                    </IconButton>
-                                    <IconButton size="small" onClick={() => deleteDeck(deck.id)} color="error" title="Delete Deck">
-                                        <DeleteIcon fontSize="small" />
-                                    </IconButton>
-                                    {deck.is_public && (
-                                        <IconButton size="small" onClick={() => setShareLink(`${window.location.origin}/decks/shared/${deck.id}`)} color="primary" title="Share Link">
-                                            <ShareIcon fontSize="small" />
-                                        </IconButton>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3, minHeight: '3em', opacity: 0.8, fontWeight: 500 }}>
+                                        {deck.description || 'No description provided.'}
+                                    </Typography>
+
+                                    {deck.tags.length > 0 && (
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                            {deck.tags.map(t => (
+                                                <Chip
+                                                    key={t}
+                                                    label={t}
+                                                    size="small"
+                                                    icon={<Tag size={12} />}
+                                                    sx={{
+                                                        bgcolor: 'rgba(255,255,255,0.05)',
+                                                        border: '1px solid var(--glass-border)',
+                                                        fontWeight: 600,
+                                                        fontSize: '0.7rem'
+                                                    }}
+                                                />
+                                            ))}
+                                        </Box>
                                     )}
-                                </Box>
-                                <Button size="small" component={Link} href={`/decks/${deck.id}`}>
-                                    Manage Cards
-                                </Button>
-                            </CardActions>
-                        </Card>
+                                </CardContent>
+                                <CardActions sx={{ p: 2, pt: 0, justifyContent: 'space-between' }}>
+                                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                        <IconButton size="small" onClick={() => handleOpenEdit(deck)} sx={{ color: 'text.secondary' }}>
+                                            <Settings2 size={18} />
+                                        </IconButton>
+                                        <IconButton size="small" onClick={() => deleteDeck(deck.id)} color="error" sx={{ opacity: 0.6 }}>
+                                            <Trash2 size={18} />
+                                        </IconButton>
+                                        {deck.is_public && (
+                                            <IconButton size="small" onClick={() => setShareLink(`${window.location.origin}/decks/shared/${deck.id}`)} color="primary">
+                                                <Share2 size={18} />
+                                            </IconButton>
+                                        )}
+                                    </Box>
+                                    <Button
+                                        size="small"
+                                        component={Link}
+                                        href={`/decks/${deck.id}`}
+                                        endIcon={<ExternalLink size={14} />}
+                                        sx={{ fontWeight: 700 }}
+                                    >
+                                        Manage
+                                    </Button>
+                                </CardActions>
+                            </Card>
+                        </Box>
                     ))
                 )}
             </Box>
 
             {/* Share Modal */}
-            <Dialog open={!!shareLink} onClose={() => setShareLink(null)} maxWidth="sm" fullWidth>
-                <DialogTitle>Share Public Deck</DialogTitle>
+            <Dialog
+                open={!!shareLink}
+                onClose={() => setShareLink(null)}
+                maxWidth="xs"
+                fullWidth
+                slotProps={{
+                    paper: {
+                        sx: {
+                            borderRadius: '28px',
+                            bgcolor: 'rgba(30, 41, 59, 0.8)',
+                            backdropFilter: 'blur(20px)',
+                            border: '1px solid var(--glass-border)',
+                            p: 1
+                        }
+                    }
+                }}
+            >
+                <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 800 }}>
+                    Share Deck
+                    <IconButton onClick={() => setShareLink(null)} size="small">
+                        <X size={20} />
+                    </IconButton>
+                </DialogTitle>
                 <DialogContent>
-                    <Typography variant="body2" sx={{ mb: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 3, opacity: 0.7, fontWeight: 500 }}>
                         Anyone with this link can view and import your public deck.
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
                         <TextField
                             fullWidth
                             value={shareLink || ''}
-                            slotProps={{ input: { readOnly: true } }}
+                            slotProps={{ input: { readOnly: true, sx: { fontWeight: 600, fontSize: '0.9rem' } } }}
                             size="small"
                         />
-                        <Button variant="contained" aria-label="copy" onClick={() => shareLink && copyToClipboard(shareLink)}>
-                            <ContentCopyIcon fontSize="small" />
+                        <Button
+                            variant="contained"
+                            onClick={() => shareLink && copyToClipboard(shareLink)}
+                            sx={{ minWidth: 'auto', p: 1.5, borderRadius: '12px' }}
+                        >
+                            <Copy size={18} />
                         </Button>
                     </Box>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setShareLink(null)}>Close</Button>
-                </DialogActions>
             </Dialog>
 
             {/* Create/Edit Modal */}
-            <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>{editingDeck ? 'Edit Deck' : 'Create New Deck'}</DialogTitle>
-                <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Dialog
+                open={open}
+                onClose={() => setOpen(false)}
+                maxWidth="sm"
+                fullWidth
+                slotProps={{
+                    paper: {
+                        sx: {
+                            borderRadius: '32px',
+                            bgcolor: (theme: any) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                            backdropFilter: 'blur(24px)',
+                            border: '1px solid var(--glass-border)',
+                        }
+                    }
+                }}
+            >
+                <DialogTitle sx={{ fontWeight: 800, pt: 3, px: 4 }}>
+                    {editingDeck ? 'Edit Deck' : 'Create New Deck'}
+                </DialogTitle>
+                <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 2, px: 4 }}>
                     <TextField
                         label="Deck Title"
                         fullWidth
                         required
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        variant="outlined"
+                        slotProps={{ input: { sx: { borderRadius: '16px' } } }}
                     />
                     <TextField
                         label="Description"
                         fullWidth
                         multiline
-                        rows={2}
+                        rows={3}
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        slotProps={{ input: { sx: { borderRadius: '16px' } } }}
                     />
-                    <TextField
-                        label="Category"
-                        fullWidth
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    />
-                    <TextField
-                        label="Tags (comma separated)"
-                        fullWidth
-                        value={formData.tags}
-                        onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                    />
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                        <TextField
+                            label="Category"
+                            fullWidth
+                            value={formData.category}
+                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                            slotProps={{ input: { sx: { borderRadius: '16px' } } }}
+                        />
+                        <TextField
+                            label="Tags"
+                            placeholder="tag1, tag2"
+                            fullWidth
+                            value={formData.tags}
+                            onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                            slotProps={{ input: { sx: { borderRadius: '16px' } } }}
+                        />
+                    </Box>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpen(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={handleSave} disabled={!formData.title}>
-                        Save
+                <DialogActions sx={{ p: 4, pt: 2 }}>
+                    <Button onClick={() => setOpen(false)} sx={{ fontWeight: 700 }}>Cancel</Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleSave}
+                        disabled={!formData.title}
+                        sx={{ borderRadius: '14px', px: 4, py: 1 }}
+                    >
+                        Save Deck
                     </Button>
                 </DialogActions>
             </Dialog>

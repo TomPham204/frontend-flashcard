@@ -7,9 +7,20 @@ import { Difficulty } from '@/data/starterDeck';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import Paper from '@mui/material/Paper';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
 import IconButton from '@mui/material/IconButton';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import {
+  ArrowLeft,
+  Sparkles,
+  RotateCw,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  ChevronRight,
+  BookOpen
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function StudyPage() {
   const params = useParams();
@@ -53,16 +64,33 @@ export default function StudyPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentCard, isFlipped]);
 
-  if (!mounted) return null;
+  if (!mounted || loading) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 2 }}>
+        <BookOpen className="animate-pulse text-indigo-500" size={48} />
+      </Box>
+    );
+  }
 
   if (dueCards.length === 0) {
     return (
-      <Box sx={{ textAlign: 'center', mt: 8 }}>
-        <Typography variant="h5" gutterBottom>You're all caught up!</Typography>
-        <Typography color="text.secondary" sx={{ mb: 4 }}>
-          No more cards due for {category} today.
+      <Box
+        component={motion.div}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        sx={{ textAlign: 'center', mt: 8, p: 6, borderRadius: '32px', bgcolor: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)' }}
+      >
+        <Sparkles className="text-yellow-500 mb-4 mx-auto" size={48} />
+        <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>You're all caught up!</Typography>
+        <Typography color="text.secondary" sx={{ mb: 4, fontWeight: 500 }}>
+          No more cards due for {category} today. Great job!
         </Typography>
-        <Button variant="contained" onClick={() => router.push('/')}>
+        <Button
+          variant="contained"
+          onClick={() => router.push('/')}
+          startIcon={<ArrowLeft size={18} />}
+          sx={{ py: 1.5, px: 4 }}
+        >
           Back to Dashboard
         </Button>
       </Box>
@@ -72,118 +100,206 @@ export default function StudyPage() {
   const handleRating = (rating: Difficulty) => {
     reviewCard(currentCard.id, rating);
     setIsFlipped(false);
-    // Since the card's due_date is updated, it might drop out of dueCards on next render.
-    // If it doesn't, we can advance currentIndex manually, but our dueCards uses useMemo which re-evaluates.
-    // However, if we don't advance the index and dueCards updates, the next card will automatically slide into currentIndex 0.
-    // We should keep currentIndex at 0 and let the list shrink.
     setCurrentIndex(0);
   };
 
   return (
-    <Box sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-        <IconButton onClick={() => router.push('/')} sx={{ mr: 2 }}>
-          <ArrowBackIcon />
+    <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 6, justifyContent: 'space-between' }}>
+        <IconButton onClick={() => router.push('/')} sx={{ bgcolor: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)' }}>
+          <ArrowLeft size={20} />
         </IconButton>
-        <Typography variant="h5" sx={{ flexGrow: 1 }}>
-          Studying: {category}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {dueCards.length} cards remaining
-        </Typography>
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+            {category}
+          </Typography>
+          <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.5, textTransform: 'uppercase' }}>
+            Study Session
+          </Typography>
+        </Box>
+        <Box sx={{ px: 2, py: 0.5, borderRadius: '20px', bgcolor: 'primary.main', color: 'white', fontWeight: 700, fontSize: '0.8rem' }}>
+          {dueCards.length}
+        </Box>
       </Box>
 
-      {currentCard && (
-        <Box sx={{ perspective: '1000px', height: 400, mb: 4 }}>
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              position: 'relative',
-              transition: 'transform 0.6s',
-              transformStyle: 'preserve-3d',
-              transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-              cursor: 'pointer',
-            }}
-            onClick={() => !isFlipped && setIsFlipped(true)}
+      <Box sx={{ position: 'relative', height: 450, mb: 6 }}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentCard.id + isFlipped}
+            initial={{ rotateY: isFlipped ? -90 : 90, opacity: 0 }}
+            animate={{ rotateY: 0, opacity: 1 }}
+            exit={{ rotateY: isFlipped ? 90 : -90, opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+            style={{ width: '100%', height: '100%', perspective: '1000px' }}
           >
-            {/* Front */}
-            <Paper
-              elevation={3}
+            <Card
+              onClick={() => !isFlipped && setIsFlipped(true)}
               sx={{
-                position: 'absolute',
                 width: '100%',
                 height: '100%',
-                backfaceVisibility: 'hidden',
+                cursor: !isFlipped ? 'pointer' : 'default',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
                 p: 4,
                 textAlign: 'center',
-                bgcolor: 'background.paper',
+                position: 'relative',
+                overflow: 'hidden',
+                '&:hover': !isFlipped ? {
+                  transform: 'scale(1.01)',
+                  borderColor: 'primary.main',
+                } : {}
               }}
             >
-              <Typography variant="h4">{currentCard.question}</Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ position: 'absolute', bottom: 16 }}>
-                Click or press Space to reveal answer
-              </Typography>
-            </Paper>
+              <CardContent>
+                <Typography variant={isFlipped ? "h5" : "h3"} sx={{
+                  fontWeight: 800,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.3,
+                  maxHeight: '320px',
+                  overflowY: 'auto',
+                  px: 2
+                }}>
+                  {isFlipped ? currentCard.answer : currentCard.question}
+                </Typography>
 
-            {/* Back */}
-            <Paper
-              elevation={3}
-              sx={{
-                position: 'absolute',
-                width: '100%',
-                height: '100%',
-                backfaceVisibility: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                p: 4,
-                textAlign: 'center',
-                transform: 'rotateY(180deg)',
-                bgcolor: 'background.paper',
-                overflowY: 'auto'
-              }}
-            >
-              <Typography variant="body1" sx={{ mb: 2, fontSize: '1.25rem' }}>{currentCard.answer}</Typography>
-              {currentCard.code_snippet && (
-                <Box sx={{ width: '100%', bgcolor: 'rgba(0,0,0,0.2)', p: 2, borderRadius: 1, textAlign: 'left', overflowX: 'auto', mt: 2 }}>
-                  <pre style={{ margin: 0 }}>
-                    <code>{currentCard.code_snippet}</code>
-                  </pre>
+                {isFlipped && currentCard.code_snippet && (
+                  <Box sx={{
+                    mt: 3,
+                    width: '100%',
+                    bgcolor: 'rgba(0,0,0,0.3)',
+                    p: 2,
+                    borderRadius: '12px',
+                    textAlign: 'left',
+                    overflowX: 'auto',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}>
+                    <pre style={{ margin: 0, fontSize: '0.85rem', fontFamily: 'JetBrains Mono, monospace' }}>
+                      <code>{currentCard.code_snippet}</code>
+                    </pre>
+                  </Box>
+                )}
+              </CardContent>
+
+              {!isFlipped && (
+                <Box sx={{
+                  position: 'absolute',
+                  bottom: 32,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  opacity: 0.4,
+                  fontWeight: 700
+                }}>
+                  <RotateCw size={16} />
+                  <Typography variant="caption">Tap or Space to Flip</Typography>
                 </Box>
               )}
-            </Paper>
-          </Box>
-        </Box>
-      )}
-
-      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-        {!isFlipped ? (
-          <Button variant="contained" size="large" onClick={() => setIsFlipped(true)} sx={{ minWidth: 200 }}>
-            Show Answer
-          </Button>
-        ) : (
-          <>
-            <Button variant="outlined" color="error" onClick={() => handleRating('Again')}>
-              Again (1)
-            </Button>
-            <Button variant="outlined" color="warning" onClick={() => handleRating('Hard')}>
-              Hard (2)
-            </Button>
-            <Button variant="outlined" color="info" onClick={() => handleRating('Good')}>
-              Good (3)
-            </Button>
-            <Button variant="outlined" color="success" onClick={() => handleRating('Easy')}>
-              Easy (4)
-            </Button>
-          </>
-        )}
+            </Card>
+          </motion.div>
+        </AnimatePresence>
       </Box>
+
+      <AnimatePresence>
+        {!isFlipped ? (
+          <Box
+            component={motion.div}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            sx={{ display: 'flex', justifyContent: 'center' }}
+          >
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => setIsFlipped(true)}
+              endIcon={<Sparkles size={20} />}
+              sx={{
+                minWidth: 260,
+                py: 2,
+                borderRadius: '16px',
+                fontSize: '1.1rem',
+                boxShadow: '0 20px 40px -12px rgba(99, 102, 241, 0.5)'
+              }}
+            >
+              Reveal Answer
+            </Button>
+          </Box>
+        ) : (
+          <Box
+            component={motion.div}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: 2,
+              p: 2,
+              borderRadius: '24px',
+              bgcolor: 'rgba(255,255,255,0.03)',
+              border: '1px solid var(--glass-border)'
+            }}
+          >
+            <RatingButton
+              label="Again"
+              sub="1"
+              color="error.main"
+              icon={<XCircle size={20} />}
+              onClick={() => handleRating('Again')}
+            />
+            <RatingButton
+              label="Hard"
+              sub="2"
+              color="warning.main"
+              icon={<AlertCircle size={20} />}
+              onClick={() => handleRating('Hard')}
+            />
+            <RatingButton
+              label="Good"
+              sub="3"
+              color="info.main"
+              icon={<CheckCircle2 size={20} />}
+              onClick={() => handleRating('Good')}
+            />
+            <RatingButton
+              label="Easy"
+              sub="4"
+              color="success.main"
+              icon={<Sparkles size={20} />}
+              onClick={() => handleRating('Easy')}
+            />
+          </Box>
+        )}
+      </AnimatePresence>
     </Box>
+  );
+}
+
+function RatingButton({ label, sub, color, icon, onClick }: any) {
+  return (
+    <Button
+      fullWidth
+      onClick={onClick}
+      sx={{
+        flexDirection: 'column',
+        py: 2,
+        gap: 1,
+        borderRadius: '16px',
+        border: '1px solid transparent',
+        transition: 'all 0.2s',
+        '&:hover': {
+          bgcolor: 'rgba(255,255,255,0.05)',
+          borderColor: color,
+          '& .icon': { color: color }
+        }
+      }}
+    >
+      <Box className="icon" sx={{ opacity: 0.8, transition: 'color 0.2s' }}>{icon}</Box>
+      <Box>
+        <Typography variant="body2" sx={{ fontWeight: 800, display: 'block', lineHeight: 1 }}>{label}</Typography>
+        <Typography variant="caption" sx={{ opacity: 0.4, fontWeight: 700 }}>{sub}</Typography>
+      </Box>
+    </Button>
   );
 }
