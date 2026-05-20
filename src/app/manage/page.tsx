@@ -2,6 +2,8 @@
 
 import * as React from 'react';
 import { useFlashcardStore } from '@/store/useFlashcardStore';
+import { useFlashcardSearch } from '@/hooks/useFlashcardSearch';
+import SearchHeader from '@/components/manage/SearchHeader';
 import { Flashcard } from '@/data/starterDeck';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -38,7 +40,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function ManageCards() {
   const { cards, addCard, updateCard, deleteCard } = useFlashcardStore();
   const [mounted, setMounted] = React.useState(false);
-  const [search, setSearch] = React.useState('');
+
+  const {
+    searchQuery,
+    setSearchQuery,
+    filters,
+    updateFilter,
+    filteredAndSearchedCards,
+    clearSearch
+  } = useFlashcardSearch(cards);
+
+  const categories = React.useMemo(() => {
+    return Array.from(new Set(cards.map(c => c.category))).sort();
+  }, [cards]);
 
   const [open, setOpen] = React.useState(false);
   const [editingCard, setEditingCard] = React.useState<Flashcard | null>(null);
@@ -59,12 +73,6 @@ export default function ManageCards() {
   }, []);
 
   if (!mounted) return null;
-
-  const filteredCards = cards.filter(c =>
-    c.question.toLowerCase().includes(search.toLowerCase()) ||
-    c.category.toLowerCase().includes(search.toLowerCase()) ||
-    c.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))
-  );
 
   const handleOpenNew = () => {
     setEditingCard(null);
@@ -112,10 +120,10 @@ export default function ManageCards() {
   };
 
   const handleToggleAll = () => {
-    if (selectedIds.size === filteredCards.length && filteredCards.length > 0) {
+    if (selectedIds.size === filteredAndSearchedCards.length && filteredAndSearchedCards.length > 0) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredCards.map(c => c.id)));
+      setSelectedIds(new Set(filteredAndSearchedCards.map(c => c.id)));
     }
   };
 
@@ -145,7 +153,7 @@ export default function ManageCards() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mb: 4 }}>
         <Box>
           <Typography variant="h3" sx={{ fontWeight: 800, letterSpacing: '-0.03em' }}>Manage Cards</Typography>
-          <Typography variant="body2" sx={{ opacity: 0.6, fontWeight: 600 }}>Total: {filteredCards.length} cards</Typography>
+          <Typography variant="body2" sx={{ opacity: 0.6, fontWeight: 600 }}>Total: {cards.length} cards</Typography>
         </Box>
 
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -178,23 +186,14 @@ export default function ManageCards() {
         </Box>
       </Box>
 
-      <TextField
-        fullWidth
-        variant="outlined"
-        placeholder="Search questions, categories, or tags..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        sx={{ mb: 4 }}
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search size={20} className="opacity-40" />
-              </InputAdornment>
-            ),
-            sx: { borderRadius: '16px', bgcolor: 'rgba(255,255,255,0.03)' }
-          }
-        }}
+      <SearchHeader
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        filters={filters}
+        onFilterChange={updateFilter}
+        onClear={clearSearch}
+        categories={categories}
+        totalResults={filteredAndSearchedCards.length}
       />
 
       <TableContainer sx={{
@@ -209,8 +208,8 @@ export default function ManageCards() {
             <TableRow>
               <TableCell padding="checkbox">
                 <Checkbox
-                  indeterminate={selectedIds.size > 0 && selectedIds.size < filteredCards.length}
-                  checked={filteredCards.length > 0 && selectedIds.size === filteredCards.length}
+                  indeterminate={selectedIds.size > 0 && selectedIds.size < filteredAndSearchedCards.length}
+                  checked={filteredAndSearchedCards.length > 0 && selectedIds.size === filteredAndSearchedCards.length}
                   onChange={handleToggleAll}
                 />
               </TableCell>
@@ -222,7 +221,7 @@ export default function ManageCards() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredCards.map((card) => (
+            {filteredAndSearchedCards.map((card: Flashcard) => (
               <TableRow
                 key={card.id}
                 selected={selectedIds.has(card.id)}
@@ -252,7 +251,7 @@ export default function ManageCards() {
                 </TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                    {card.tags.slice(0, 2).map(t => (
+                    {card.tags.slice(0, 2).map((t: string) => (
                       <Chip key={t} label={t} size="small" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
                     ))}
                     {card.tags.length > 2 && (
@@ -282,7 +281,7 @@ export default function ManageCards() {
                 </TableCell>
               </TableRow>
             ))}
-            {filteredCards.length === 0 && (
+            {filteredAndSearchedCards.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} align="center" sx={{ py: 8, opacity: 0.5 }}>
                   No cards found matching your search.
