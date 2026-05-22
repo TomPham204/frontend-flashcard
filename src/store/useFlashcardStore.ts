@@ -140,13 +140,32 @@ export const useFlashcardStore = create<FlashcardState>()(
         };
 
         if (session && isValidUUID(id)) {
-          const { error } = await supabase
+          // Update card SRS data
+          const { error: updateError } = await supabase
             .from('flashcards')
             .update(updatedFields)
             .eq('id', id);
-          if (error) {
-            set({ error: error.message });
+
+          if (updateError) {
+            set({ error: updateError.message });
             return;
+          }
+
+          // Record review history
+          const { error: historyError } = await supabase
+            .from('review_history')
+            .insert({
+              card_id: id,
+              user_id: session.user.id,
+              rating,
+              ease_factor: updatedFields.ease_factor,
+              interval_days: updatedFields.interval_days,
+              reviewed_at: updatedFields.updated_at
+            });
+
+          if (historyError) {
+            console.error('Failed to record review history:', historyError.message);
+            // We don't block the user if history fails, but we log it
           }
         }
 

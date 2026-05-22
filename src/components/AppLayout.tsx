@@ -23,7 +23,8 @@ import {
   Menu,
   GraduationCap,
   Sun,
-  Moon
+  Moon,
+  TrendingUp
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -90,6 +91,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const menuItems = [
     { text: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/' },
+    { text: 'Study Analytics', icon: <TrendingUp size={20} />, path: '/analytics' },
     { text: 'Decks', icon: <Library size={20} />, path: '/decks' },
     { text: 'Manage Cards', icon: <Layers size={20} />, path: '/manage' },
     { text: 'Settings', icon: <Settings size={20} />, path: '/settings' },
