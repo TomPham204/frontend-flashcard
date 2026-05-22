@@ -18,6 +18,7 @@ import {
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
+import { useTheme } from '@mui/material/styles';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -26,28 +27,38 @@ interface DailyChartProps {
 }
 
 export function DailyReviewChart({ data }: DailyChartProps) {
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
+
+    const tickColor = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)';
+    const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+    const cursorColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    const tooltipBg = isDark ? '#1e1e1e' : '#ffffff';
+    const tooltipBorder = isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)';
+    const tooltipColor = isDark ? '#fff' : '#000';
+
     return (
-        <Card sx={{ p: 3, borderRadius: '24px', bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', height: 350, display: 'flex', flexDirection: 'column' }}>
+        <Card sx={{ p: 3, borderRadius: '24px', bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', border: '1px solid var(--glass-border)', height: 350, display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>Daily Activity</Typography>
             <Box sx={{ flexGrow: 1, minHeight: 0 }}>
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
                         <XAxis
                             dataKey="date"
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
+                            tick={{ fill: tickColor, fontSize: 12 }}
                             tickFormatter={(str) => new Date(str).toLocaleDateString(undefined, { weekday: 'short' })}
                         />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: tickColor, fontSize: 12 }} />
                         <Tooltip
-                            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                            cursor={{ fill: cursorColor }}
                             contentStyle={{
-                                backgroundColor: '#1e1e1e',
-                                border: '1px solid rgba(255,255,255,0.1)',
+                                backgroundColor: tooltipBg,
+                                border: tooltipBorder,
                                 borderRadius: '12px',
-                                color: '#fff'
+                                color: tooltipColor,
                             }}
                         />
                         <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} />
@@ -63,8 +74,15 @@ interface DistributionChartProps {
 }
 
 export function CategoryDistributionChart({ data }: DistributionChartProps) {
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
+
+    const tooltipBg = isDark ? '#1e1e1e' : '#ffffff';
+    const tooltipBorder = isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)';
+    const tooltipColor = isDark ? '#fff' : '#000';
+
     return (
-        <Card sx={{ p: 3, borderRadius: '24px', bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', height: 350, display: 'flex', flexDirection: 'column' }}>
+        <Card sx={{ p: 3, borderRadius: '24px', bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', border: '1px solid var(--glass-border)', height: 350, display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>Mastery by Category</Typography>
             <Box sx={{ flexGrow: 1, minHeight: 0 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -84,10 +102,10 @@ export function CategoryDistributionChart({ data }: DistributionChartProps) {
                         </Pie>
                         <Tooltip
                             contentStyle={{
-                                backgroundColor: '#1e1e1e',
-                                border: '1px solid rgba(255,255,255,0.1)',
+                                backgroundColor: tooltipBg,
+                                border: tooltipBorder,
                                 borderRadius: '12px',
-                                color: '#fff'
+                                color: tooltipColor,
                             }}
                         />
                     </PieChart>
