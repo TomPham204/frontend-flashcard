@@ -21,6 +21,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import MarkdownRenderer from '@/components/markdown/MarkdownRenderer';
 
 export default function StudyPage() {
   const params = useParams();
@@ -153,33 +154,32 @@ export default function StudyPage() {
               }}
             >
               <CardContent>
-                <Typography variant={isFlipped ? "h5" : "h3"} sx={{
-                  fontWeight: 800,
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.3,
-                  maxHeight: '320px',
+                <Box sx={{
+                  width: '100%',
+                  maxHeight: '350px',
                   overflowY: 'auto',
-                  px: 2
+                  px: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center', // Center content horizontally
+                  justifyContent: 'center', // Center content vertically
+                  flex: 1
                 }}>
-                  {isFlipped ? currentCard.answer : currentCard.question}
-                </Typography>
-
-                {isFlipped && currentCard.code_snippet && (
-                  <Box sx={{
-                    mt: 3,
-                    width: '100%',
-                    bgcolor: 'rgba(0,0,0,0.3)',
-                    p: 2,
-                    borderRadius: '12px',
-                    textAlign: 'left',
-                    overflowX: 'auto',
-                    border: '1px solid rgba(255,255,255,0.1)'
-                  }}>
-                    <pre style={{ margin: 0, fontSize: '0.85rem', fontFamily: 'JetBrains Mono, monospace' }}>
-                      <code>{currentCard.code_snippet}</code>
-                    </pre>
-                  </Box>
-                )}
+                  {isFlipped ? (
+                    <Box sx={{ width: '100%', p: 1, '& .markdown-body': { textAlign: 'left', fontSize: '1.2rem' } }}>
+                      <MarkdownRenderer content={currentCard.answer} />
+                      {currentCard.code_snippet && (
+                        <Box sx={{ mt: 3, width: '100%' }}>
+                          <MarkdownRenderer content={`\`\`\`\n${currentCard.code_snippet}\n\`\`\``} />
+                        </Box>
+                      )}
+                    </Box>
+                  ) : (
+                    <Box sx={{ width: '100%', textAlign: 'center', '& .markdown-body': { textAlign: 'center', fontSize: '2rem' } }}>
+                      <MarkdownRenderer content={currentCard.question} />
+                    </Box>
+                  )}
+                </Box>
               </CardContent>
 
               {!isFlipped && (
