@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useFlashcardStore } from '@/store/useFlashcardStore';
+import { useFlashcards } from '@/hooks/queries/useFlashcards';
+import { useReviewFlashcard } from '@/hooks/mutations/flashcards/useReviewFlashcard';
 import { Difficulty } from '@/data/starterDeck';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -27,7 +28,8 @@ export default function StudyPage() {
   const params = useParams();
   const router = useRouter();
   const category = decodeURIComponent(params.category as string);
-  const { cards, reviewCard, migrateIfNeeded, loading } = useFlashcardStore();
+  const { data: cards = [], isLoading: loading } = useFlashcards();
+  const { mutate: reviewCard } = useReviewFlashcard();
 
   const [mounted, setMounted] = React.useState(false);
   const [currentIndex, setCurrentIndex] = React.useState(0);
@@ -35,8 +37,7 @@ export default function StudyPage() {
 
   React.useEffect(() => {
     setMounted(true);
-    migrateIfNeeded();
-  }, [migrateIfNeeded]);
+  }, []);
 
   const now = new Date();
   const dueCards = React.useMemo(() => {
@@ -99,7 +100,7 @@ export default function StudyPage() {
   }
 
   const handleRating = (rating: Difficulty) => {
-    reviewCard(currentCard.id, rating);
+    reviewCard({ id: currentCard.id, rating });
     setIsFlipped(false);
     setCurrentIndex(0);
   };

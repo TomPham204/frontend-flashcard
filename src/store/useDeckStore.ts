@@ -41,24 +41,37 @@ export const useDeckStore = create<DeckState>((set, get) => ({
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return null;
 
+        const optimisticId = crypto.randomUUID();
         const newDeck = {
             ...deckData,
+            id: optimisticId,
             is_public: deckData.is_public ?? false,
             user_id: session.user.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
         };
+
+        const previousDecks = get().decks;
+        // Optimistic UI Update
+        set((state) => ({ decks: [newDeck as Deck, ...state.decks] }));
 
         const { data, error } = await supabase
             .from('decks')
-            .insert([newDeck])
+            .insert([{ ...newDeck, id: undefined }]) // let Supabase generate the real ID if it's a serial, or use the UUID
             .select()
             .single();
 
         if (error) {
-            set({ error: error.message });
+            console.error("Optimistic createDeck failed", error);
+            set({ error: error.message, decks: previousDecks }); // Rollback
             return null;
         }
 
-        set((state) => ({ decks: [data as Deck, ...state.decks] }));
+        // Reconcile: Replace optimistic deck with server verified deck (which has real ID and timestamps)
+        set((state) => ({
+            decks: state.decks.map((d) => (d.id === optimisticId ? (data as Deck) : d)),
+        }));
+
         return data as Deck;
     },
 
@@ -66,34 +79,38 @@ export const useDeckStore = create<DeckState>((set, get) => ({
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
+        const previousDecks = get().decks;
+        // Optimistic UI Update
+        set((state) => ({
+            decks: state.decks.map((d) => (d.id === id ? { ...d, ...updates, updated_at: new Date().toISOString() } : d)),
+        }));
+
         const { error } = await supabase
             .from('decks')
             .update(updates)
             .eq('id', id);
 
         if (error) {
-            set({ error: error.message });
-            return;
+            console.error("Optimistic updateDeck failed", error);
+            set({ error: error.message, decks: previousDecks }); // Rollback
         }
-
-        set((state) => ({
-            decks: state.decks.map((d) => (d.id === id ? { ...d, ...updates } : d)),
-        }));
     },
 
     deleteDeck: async (id) => {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
-        const { error } = await supabase.from('decks').delete().eq('id', id);
-        if (error) {
-            set({ error: error.message });
-            return;
-        }
-
+        const previousDecks = get().decks;
+        // Optimistic UI Update
         set((state) => ({
             decks: state.decks.filter((d) => d.id !== id),
         }));
+
+        const { error } = await supabase.from('decks').delete().eq('id', id);
+        if (error) {
+            console.error("Optimistic deleteDeck failed", error);
+            set({ error: error.message, decks: previousDecks }); // Rollback
+        }
     },
 
     toggleVisibility: async (id, is_public) => {

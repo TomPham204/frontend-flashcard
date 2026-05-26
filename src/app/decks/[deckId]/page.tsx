@@ -28,7 +28,7 @@ import Checkbox from '@mui/material/Checkbox';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
+import { CardEditor, CardDraft } from '@/components/editor/CardEditor';
 export default function DeckEditorPage({ params }: { params: Promise<{ deckId: string }> }) {
     const { deckId } = React.use(params);
     const router = useRouter();
@@ -129,22 +129,20 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
         setOpen(true);
     };
 
-    const handleSave = () => {
+    const handleSave = async (draft: CardDraft) => {
         const dataToSave = {
-            deck_id: deckId, // Assign to this deck
-            question: formData.question,
-            answer: formData.answer,
-            category: deck.category || 'Uncategorized', // inherit deck category
-            code_snippet: formData.code_snippet,
-            tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
+            deck_id: deckId,
+            question: draft.question,
+            answer: draft.answer,
+            category: deck.category || 'Uncategorized',
+            tags: draft.tags.split(',').map((t: string) => t.trim()).filter(Boolean),
         };
 
         if (editingCard) {
-            updateCard(editingCard.id, dataToSave);
+            await updateCard(editingCard.id, dataToSave);
         } else {
-            addCard(dataToSave as any);
+            await addCard(dataToSave as any);
         }
-        setOpen(false);
     };
 
     const handleBulkDelete = async () => {
@@ -275,47 +273,22 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
                 </Table>
             </TableContainer>
 
-            <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>{editingCard ? 'Edit Card' : 'Create New Card'}</DialogTitle>
-                <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-                    <TextField
-                        label="Question"
-                        fullWidth
-                        multiline
-                        rows={2}
-                        value={formData.question}
-                        onChange={(e) => setFormData({ ...formData, question: e.target.value })}
+            <Dialog open={open} onClose={() => setOpen(false)} maxWidth="lg" fullWidth sx={{ '& .MuiDialog-paper': { m: 2, height: '90vh', maxHeight: 'none' } }}>
+                {open && (
+                    <CardEditor
+                        initialData={
+                            editingCard
+                                ? {
+                                    question: editingCard.question,
+                                    answer: editingCard.answer,
+                                    tags: editingCard.tags.join(', ')
+                                }
+                                : { question: '', answer: '', tags: '' }
+                        }
+                        onSave={handleSave}
+                        onClose={() => setOpen(false)}
                     />
-                    <TextField
-                        label="Answer"
-                        fullWidth
-                        multiline
-                        rows={3}
-                        value={formData.answer}
-                        onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
-                    />
-                    <TextField
-                        label="Code Snippet (optional)"
-                        fullWidth
-                        multiline
-                        rows={3}
-                        value={formData.code_snippet}
-                        onChange={(e) => setFormData({ ...formData, code_snippet: e.target.value })}
-                        sx={{ fontFamily: 'monospace' }}
-                    />
-                    <TextField
-                        label="Tags (comma separated)"
-                        fullWidth
-                        value={formData.tags}
-                        onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpen(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={handleSave} disabled={!formData.question || !formData.answer}>
-                        Save
-                    </Button>
-                </DialogActions>
+                )}
             </Dialog>
 
             {/* Add Existing Cards Dialog */}

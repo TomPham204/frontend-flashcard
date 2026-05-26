@@ -1,7 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { useFlashcardStore } from '@/store/useFlashcardStore';
+import { useFlashcards } from '@/hooks/queries/useFlashcards';
+import { useCreateFlashcard } from '@/hooks/mutations/flashcards/useCreateFlashcard';
+import { useUpdateFlashcard } from '@/hooks/mutations/flashcards/useUpdateFlashcard';
+import { useDeleteFlashcard } from '@/hooks/mutations/flashcards/useDeleteFlashcard';
 import { useFlashcardSearch } from '@/hooks/useFlashcardSearch';
 import SearchHeader from '@/components/manage/SearchHeader';
 import { Flashcard } from '@/data/starterDeck';
@@ -38,7 +41,10 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ManageCards() {
-  const { cards, addCard, updateCard, deleteCard } = useFlashcardStore();
+  const { data: cards = [] } = useFlashcards();
+  const { mutate: addCard } = useCreateFlashcard();
+  const { mutate: updateCardMutation } = useUpdateFlashcard();
+  const { mutateAsync: deleteCard } = useDeleteFlashcard();
   const [mounted, setMounted] = React.useState(false);
 
   const {
@@ -69,7 +75,6 @@ export default function ManageCards() {
 
   React.useEffect(() => {
     setMounted(true);
-    useFlashcardStore.getState().migrateIfNeeded();
   }, []);
 
   if (!mounted) return null;
@@ -102,9 +107,9 @@ export default function ManageCards() {
     };
 
     if (editingCard) {
-      updateCard(editingCard.id, dataToSave);
+      updateCardMutation({ id: editingCard.id, ...dataToSave });
     } else {
-      addCard(dataToSave);
+      addCard({ ...dataToSave, id: crypto.randomUUID() });
     }
     setOpen(false);
   };

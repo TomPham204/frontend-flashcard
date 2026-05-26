@@ -78,52 +78,67 @@ export const useFlashcardStore = create<FlashcardState>()(
           updated_at: new Date().toISOString(),
         };
 
+        const previousCards = get().cards;
+        // Optimistic UI Update immediately
+        set((state) => ({ cards: [newCard as Flashcard, ...state.cards] }));
+
         if (session) {
           const { error } = await supabase
             .from('flashcards')
             .insert([{ ...newCard, user_id: session.user.id }]);
+
           if (error) {
-            set({ error: error.message });
+            // Rollback on error
+            console.error("Optimistic add failed", error);
+            set({ error: error.message, cards: previousCards });
             return;
           }
         }
-
-        set((state) => ({ cards: [newCard as Flashcard, ...state.cards] }));
       },
 
       updateCard: async (id, cardData) => {
         const { data: { session } } = await supabase.auth.getSession();
         const updatedFields = { ...cardData, updated_at: new Date().toISOString() };
+        const previousCards = get().cards;
+
+        // Optimistic UI Update immediately
+        set((state) => ({
+          cards: state.cards.map((c) => (c.id === id ? { ...c, ...updatedFields } : c)),
+        }));
 
         if (session && isValidUUID(id)) {
           const { error } = await supabase
             .from('flashcards')
             .update(updatedFields)
             .eq('id', id);
+
           if (error) {
-            set({ error: error.message });
+            // Rollback on error
+            console.error("Optimistic update failed", error);
+            set({ error: error.message, cards: previousCards });
             return;
           }
         }
-
-        set((state) => ({
-          cards: state.cards.map((c) => (c.id === id ? { ...c, ...updatedFields } : c)),
-        }));
       },
 
       deleteCard: async (id) => {
         const { data: { session } } = await supabase.auth.getSession();
-        if (session && isValidUUID(id)) {
-          const { error } = await supabase.from('flashcards').delete().eq('id', id);
-          if (error) {
-            set({ error: error.message });
-            return;
-          }
-        }
+        const previousCards = get().cards;
 
+        // Optimistic UI Update immediately
         set((state) => ({
           cards: state.cards.filter((c) => c.id !== id),
         }));
+
+        if (session && isValidUUID(id)) {
+          const { error } = await supabase.from('flashcards').delete().eq('id', id);
+          if (error) {
+            // Rollback on error
+            console.error("Optimistic delete failed", error);
+            set({ error: error.message, cards: previousCards });
+            return;
+          }
+        }
       },
 
       reviewCard: async (id, rating) => {
@@ -131,13 +146,19 @@ export const useFlashcardStore = create<FlashcardState>()(
         const card = state.cards.find(c => c.id === id);
         if (!card) return;
 
-        const { data: { session } } = await supabase.auth.getSession();
-
         const srsUpdates = calculateReviewState(card, rating);
         const updatedFields = {
           ...srsUpdates,
           updated_at: new Date().toISOString(),
         };
+        const previousCards = state.cards;
+
+        // Optimistic UI Update immediately
+        set((state) => ({
+          cards: state.cards.map((c) => (c.id === id ? { ...c, ...updatedFields } : c)),
+        }));
+
+        const { data: { session } } = await supabase.auth.getSession();
 
         if (session && isValidUUID(id)) {
           // Update card SRS data
@@ -147,7 +168,9 @@ export const useFlashcardStore = create<FlashcardState>()(
             .eq('id', id);
 
           if (updateError) {
-            set({ error: updateError.message });
+            // Rollback on error
+            console.error("Optimistic review failed", updateError);
+            set({ error: updateError.message, cards: previousCards });
             return;
           }
 
@@ -165,13 +188,9 @@ export const useFlashcardStore = create<FlashcardState>()(
 
           if (historyError) {
             console.error('Failed to record review history:', historyError.message);
-            // We don't block the user if history fails, but we log it
+            // We don't block or rollback if history fails, but we log it
           }
         }
-
-        set((state) => ({
-          cards: state.cards.map((c) => (c.id === id ? { ...c, ...updatedFields } : c)),
-        }));
       },
 
       loadStarterDeck: async () => {

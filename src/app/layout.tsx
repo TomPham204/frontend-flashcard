@@ -4,6 +4,7 @@ import "./globals.css";
 import ThemeRegistry from "@/theme/ThemeRegistry";
 import AppLayout from "@/components/AppLayout";
 import { AuthProvider } from "@/components/AuthProvider";
+import { ReactQueryProvider } from "@/components/ReactQueryProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,9 +22,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         <ThemeRegistry>
-          <AuthProvider>
-            <AppLayout>{children}</AppLayout>
-          </AuthProvider>
+          <ReactQueryProvider>
+            <AuthProvider>
+              <AppLayout>{children}</AppLayout>
+            </AuthProvider>
+          </ReactQueryProvider>
         </ThemeRegistry>
       </body>
     </html>
