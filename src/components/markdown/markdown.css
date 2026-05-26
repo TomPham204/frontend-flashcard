@@ -35,13 +35,13 @@
   overflow-x: auto;
   max-width: 100%;
   white-space: pre-wrap;
-  word-break: break-all;
+  word-break: break-word;
   overflow-wrap: anywhere;
 }
 
 .markdown-body pre code {
   white-space: pre-wrap;
-  word-break: break-all;
+  word-break: break-word;
   overflow-wrap: anywhere;
 }
 
